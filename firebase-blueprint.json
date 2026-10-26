@@ -1,0 +1,273 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile in Nooran",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "username": { "type": "string" },
+        "usernameLowercase": { "type": "string" },
+        "email": { "type": "string" },
+        "emailVerified": { "type": "boolean" },
+        "bio": { "type": "string" },
+        "avatarSymbol": { "type": "string" },
+        "avatarColor": { "type": "string" },
+        "isVerified": { "type": "boolean" },
+        "userInterests": { "type": "array" },
+        "followersCount": { "type": "integer" },
+        "followingCount": { "type": "integer" },
+        "postsCount": { "type": "integer" },
+        "impactScore": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "username", "createdAt", "updatedAt"]
+    },
+    "UsernameReservation": {
+      "title": "UsernameReservation",
+      "description": "Unique username claim in Nooran",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "createdAt"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Text post or thread part or poll in Nooran",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorUsername": { "type": "string" },
+        "authorAvatarSymbol": { "type": "string" },
+        "authorAvatarColor": { "type": "string" },
+        "authorVerified": { "type": "boolean" },
+        "content": { "type": "string" },
+        "postType": { "type": "string", "enum": ["standard", "thread", "poll"] },
+        "threadId": { "type": "string" },
+        "threadPosition": { "type": "integer" },
+        "threadTotal": { "type": "integer" },
+        "pollQuestion": { "type": "string" },
+        "pollOptions": { "type": "array" },
+        "pollVotes": { "type": "array" },
+        "pollTotalVotes": { "type": "integer" },
+        "impactScore": { "type": "integer" },
+        "likesCount": { "type": "integer" },
+        "repostsCount": { "type": "integer" },
+        "quotesCount": { "type": "integer" },
+        "commentsCount": { "type": "integer" },
+        "bookmarksCount": { "type": "integer" },
+        "tags": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "authorName", "authorUsername", "content", "createdAt", "updatedAt"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "Comment on a post",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string" },
+        "userId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorUsername": { "type": "string" },
+        "authorAvatarSymbol": { "type": "string" },
+        "authorAvatarColor": { "type": "string" },
+        "authorVerified": { "type": "boolean" },
+        "content": { "type": "string" },
+        "parentCommentId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["postId", "userId", "authorName", "content", "createdAt"]
+    },
+    "Reaction": {
+      "title": "Reaction",
+      "description": "User reaction to a post",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["postId", "userId", "type", "createdAt"]
+    },
+    "Story": {
+      "title": "Story",
+      "description": "Text story expiring in 24 hours",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorUsername": { "type": "string" },
+        "authorAvatarSymbol": { "type": "string" },
+        "authorAvatarColor": { "type": "string" },
+        "content": { "type": "string" },
+        "templateType": { "type": "string" },
+        "bgGradient": { "type": "string" },
+        "textColor": { "type": "string" },
+        "textSize": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "authorName", "content", "createdAt", "expiresAt"]
+    },
+    "Bookmark": {
+      "title": "Bookmark",
+      "description": "Saved post",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "postId": { "type": "string" },
+        "postContent": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorUsername": { "type": "string" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "postId", "createdAt"]
+    },
+    "PollVote": {
+      "title": "PollVote",
+      "description": "Vote on a poll",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string" },
+        "userId": { "type": "string" },
+        "optionIndex": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["postId", "userId", "optionIndex", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Notification for user activity",
+      "type": "object",
+      "properties": {
+        "recipientId": { "type": "string" },
+        "actorId": { "type": "string" },
+        "actorName": { "type": "string" },
+        "actorUsername": { "type": "string" },
+        "type": { "type": "string" },
+        "targetId": { "type": "string" },
+        "previewText": { "type": "string" },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["recipientId", "actorId", "type", "createdAt"]
+    },
+    "Draft": {
+      "title": "Draft",
+      "description": "User saved draft post or thread",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "content": { "type": "string" },
+        "draftType": { "type": "string" },
+        "tags": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "content", "updatedAt"]
+    },
+    "DailyContent": {
+      "title": "DailyContent",
+      "description": "Curated daily word, wird, or dhikr",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string" },
+        "source": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "type", "createdAt"]
+    },
+    "Follow": {
+      "title": "Follow",
+      "description": "Follow relationship between users",
+      "type": "object",
+      "properties": {
+        "followerId": { "type": "string" },
+        "followingId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["followerId", "followingId", "createdAt"]
+    },
+    "UserSettings": {
+      "title": "UserSettings",
+      "description": "User privacy and preference settings",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "isPrivate": { "type": "boolean" },
+        "mutedWords": { "type": "array" },
+        "allowRepliesFrom": { "type": "string" },
+        "allowMentionsFrom": { "type": "string" },
+        "showActivityStatus": { "type": "boolean" },
+        "dailyWirdStreak": { "type": "integer" },
+        "completedWirdToday": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Profiles of registered users"
+    },
+    "/usernames/{username}": {
+      "schema": "UsernameReservation",
+      "description": "Unique username reservations"
+    },
+    "/posts/{postId}": {
+      "schema": "Post",
+      "description": "Public social text posts and threads"
+    },
+    "/comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Comments and replies on posts"
+    },
+    "/reactions/{reactionId}": {
+      "schema": "Reaction",
+      "description": "Reactions on posts"
+    },
+    "/stories/{storyId}": {
+      "schema": "Story",
+      "description": "Text stories expiring in 24 hours"
+    },
+    "/bookmarks/{bookmarkId}": {
+      "schema": "Bookmark",
+      "description": "Private bookmarked posts per user"
+    },
+    "/pollVotes/{voteId}": {
+      "schema": "PollVote",
+      "description": "Single vote per user on polls"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User activity notifications"
+    },
+    "/drafts/{draftId}": {
+      "schema": "Draft",
+      "description": "Private draft posts"
+    },
+    "/dailyContent/{contentId}": {
+      "schema": "DailyContent",
+      "description": "Curated daily Islamic words and wirds"
+    },
+    "/follows/{followId}": {
+      "schema": "Follow",
+      "description": "Follow graph"
+    },
+    "/userSettings/{settingsId}": {
+      "schema": "UserSettings",
+      "description": "User preferences and security settings"
+    }
+  }
+}

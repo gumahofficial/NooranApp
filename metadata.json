@@ -1,0 +1,6 @@
+{
+  "name": "نُوران | NOORAN",
+  "description": "منصة اجتماعية إسلامية نصية حديثة تجمع بين التواصل الهادئ والكلمات الطيبة والذكر والأثر",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

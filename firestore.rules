@@ -1,0 +1,197 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.uid is string &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 80 &&
+             data.username is string && data.username.size() > 0 && data.username.size() <= 40 &&
+             (!('usernameLowercase' in data) || data.usernameLowercase is string) &&
+             (!('email' in data) || data.email is string) &&
+             (!('emailVerified' in data) || data.emailVerified is bool) &&
+             (!('bio' in data) || (data.bio is string && data.bio.size() <= 300)) &&
+             (!('avatarSymbol' in data) || data.avatarSymbol is string) &&
+             (!('avatarColor' in data) || data.avatarColor is string) &&
+             (!('isVerified' in data) || data.isVerified is bool) &&
+             (!('userInterests' in data) || data.userInterests is list) &&
+             (!('followersCount' in data) || data.followersCount is int) &&
+             (!('followingCount' in data) || data.followingCount is int) &&
+             (!('postsCount' in data) || data.postsCount is int) &&
+             (!('impactScore' in data) || data.impactScore is int) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidPost(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.authorName is string && data.authorName.size() > 0 &&
+             data.authorUsername is string && data.authorUsername.size() > 0 &&
+             data.content is string && data.content.size() > 0 && data.content.size() <= 2000 &&
+             (!('postType' in data) || data.postType in ['standard', 'thread', 'poll']) &&
+             (!('impactScore' in data) || data.impactScore is int) &&
+             (!('likesCount' in data) || data.likesCount is int) &&
+             (!('repostsCount' in data) || data.repostsCount is int) &&
+             (!('quotesCount' in data) || data.quotesCount is int) &&
+             (!('commentsCount' in data) || data.commentsCount is int) &&
+             (!('bookmarksCount' in data) || data.bookmarksCount is int) &&
+             (!('tags' in data) || data.tags is list) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidComment(data) {
+      return data.postId is string &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.authorName is string && data.authorName.size() > 0 &&
+             data.content is string && data.content.size() > 0 && data.content.size() <= 1000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidReaction(data) {
+      return data.postId is string &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.type is string && data.type in ['love', 'jazakallah', 'barakallah', 'touched', 'useful', 'amen'] &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidStory(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.authorName is string && data.authorName.size() > 0 &&
+             data.content is string && data.content.size() > 0 && data.content.size() <= 800 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.expiresAt is timestamp;
+    }
+
+    function isValidBookmark(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.postId is string &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidPollVote(data) {
+      return data.postId is string &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.optionIndex is int && data.optionIndex >= 0 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidNotification(data) {
+      return data.recipientId is string &&
+             data.actorId is string && data.actorId == request.auth.uid &&
+             data.type is string &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) &&
+                       (!('isVerified' in request.resource.data) || request.resource.data.isVerified == false);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) &&
+                       (!('isVerified' in request.resource.data) || request.resource.data.isVerified == resource.data.isVerified);
+      allow delete: if isOwner(userId);
+    }
+
+    // Usernames collection for unique username reservation
+    match /usernames/{username} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       request.resource.data.uid == request.auth.uid &&
+                       request.resource.data.createdAt is timestamp &&
+                       request.resource.data.createdAt <= request.time;
+      allow update, delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
+    // Posts collection
+    match /posts/{postId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidPost(request.resource.data);
+      allow update: if isAuthenticated() && (
+        (isOwner(resource.data.userId) && isValidPost(request.resource.data)) ||
+        // Allow public counter updates (reactions, comments, bookmarks, impact score)
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount', 'commentsCount', 'repostsCount', 'quotesCount', 'bookmarksCount', 'impactScore', 'pollVotes', 'pollTotalVotes', 'updatedAt']))
+      );
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    // Comments collection
+    match /comments/{commentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidComment(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    // Reactions collection
+    match /reactions/{reactionId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidReaction(request.resource.data);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    // Stories collection
+    match /stories/{storyId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidStory(request.resource.data);
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    // Bookmarks collection (private to user)
+    match /bookmarks/{bookmarkId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && isValidBookmark(request.resource.data);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    // Poll Votes collection
+    match /pollVotes/{voteId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidPollVote(request.resource.data);
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.recipientId == request.auth.uid;
+      allow create: if isAuthenticated() && isValidNotification(request.resource.data);
+      allow update, delete: if isAuthenticated() && resource.data.recipientId == request.auth.uid;
+    }
+
+    // Drafts collection (strictly private)
+    match /drafts/{draftId} {
+      allow read, write: if isAuthenticated() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
+
+    // Daily Content (read only for authenticated, curated)
+    match /dailyContent/{contentId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Follows collection
+    match /follows/{followId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.followerId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.followerId == request.auth.uid;
+    }
+
+    // User Settings collection
+    match /userSettings/{settingsId} {
+      allow read, write: if isAuthenticated() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
+  }
+}
