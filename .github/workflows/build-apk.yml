@@ -6,11 +6,11 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-apk:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -19,29 +19,43 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Decode keystore
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+
+      - name: Make Gradle wrapper executable if present
         shell: bash
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > $GITHUB_WORKSPACE/upload-keystore.jks
+          if [ -f gradlew ]; then chmod +x gradlew; fi
 
-      - name: Build debug APK
+      - name: Build Debug APK
+        shell: bash
+        run: |
+          if [ -f gradlew ]; then
+            ./gradlew assembleDebug
+          else
+            gradle assembleDebug
+          fi
+
+      - name: Build Release APK (optional, if keystore is configured)
+        if: ${{ secrets.KEYSTORE_BASE64 != '' && secrets.STORE_PASSWORD != '' && secrets.KEY_PASSWORD != '' }}
+        shell: bash
         env:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEYSTORE_PATH: ${{ github.workspace }}/upload-keystore.jks
-        run: ./gradlew assembleDebug
-
-      - name: Build release APK
-        #if: ${{ secrets.STORE_PASSWORD != '' && secrets.KEY_PASSWORD != '' && secrets.KEYSTORE_BASE64 != '' }}
-        env:
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          KEYSTORE_PATH: ${{ github.workspace }}/upload-keystore.jks
-        run: ./gradlew assembleRelease
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > "$KEYSTORE_PATH"
+          if [ -f gradlew ]; then
+            ./gradlew assembleRelease
+          else
+            gradle assembleRelease
+          fi
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
